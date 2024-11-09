@@ -41,7 +41,7 @@ impl<'info> InitializePool<'info> {
         event: String,
         side_a: String,
         side_b: String,
-        bumps: InitializePoolBumps,
+        bumps: &InitializePoolBumps,
     ) -> Result<()> {
         require!(
             event.len() > 0 && event.len() < 32,

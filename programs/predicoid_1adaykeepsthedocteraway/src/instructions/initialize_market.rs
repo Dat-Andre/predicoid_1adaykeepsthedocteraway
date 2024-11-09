@@ -33,14 +33,14 @@ impl<'info> InitializeMarket<'info> {
         &mut self,
         name: String,
         fee: u64,
-        bumps: InitializeMarketBumps,
+        bumps: &InitializeMarketBumps,
     ) -> Result<()> {
         require!(
             name.len() > 0 && name.len() < 32,
             ErrorCode::MarketNameTooLong
         );
 
-        require!(fee > 0 && fee < 100, ErrorCode::FeeOutOfBounds);
+        require!(fee > 0 && fee <= 100, ErrorCode::FeeOutOfBounds);
 
         self.market.set_inner(Market {
             platform_admin: self.platform_config.admin,
