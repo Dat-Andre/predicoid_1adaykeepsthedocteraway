@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{error::ErrorCode, Config, Market};
 
 #[derive(Accounts)]
+#[instruction(name: String, fee: u64)]
 pub struct InitializeMarket<'info> {
     #[account(mut)]
     pub market_owner: Signer<'info>,
