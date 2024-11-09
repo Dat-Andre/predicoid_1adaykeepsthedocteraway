@@ -15,7 +15,7 @@ declare_id!("gE5vWTmKd3ehmYwwUk67UJNhSC8jfPyeiTBAkshf6uT");
 pub mod predicoid_1adaykeepsthedocteraway {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
-    }
+    /* pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        initialize_platform::handler(ctx)
+    } */
 }
