@@ -121,6 +121,8 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
   console.log("Config PDA:", configPda.toBase58());
 
     const tx = await program.methods.initializePool(
+      new BN(1).toNumber(),
+      new BN(10_000_000_000),
       eventDescription,
       sideA,
       sideB,
@@ -149,15 +151,15 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     console.log("Pool Config Data:", poolConfigData);
     const poolVaultData = await program.account.poolVaultState.fetch(poolStatePda);
     console.log("Pool Vault Data:", poolVaultData);
-    const poolFee = poolVaultData.poolFee.toNumber();
-    console.log("Pool Fee:", poolFee);
     const amountSideA = poolVaultData.amountSideA.toNumber();
     console.log("Amount Side A:", amountSideA);
     const amountSideB = poolVaultData.amountSideB.toNumber();
     console.log("Amount Side B:", amountSideB);
-    assert(poolFee === 70);
+    
     assert(amountSideA === 0);
     assert(amountSideB === 0);
+    assert(poolConfigData.minDaysToRun === 1);
+    assert(poolConfigData.targetLiqToStart.toString() === new BN(10_000_000_000).toString());
   })
 
 

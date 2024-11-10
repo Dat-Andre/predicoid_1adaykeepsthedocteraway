@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{error::ErrorCode, Config, PoolConfig, PoolVaultState};
 
 #[derive(Accounts)]
-#[instruction(event: String, side_a: String, side_b: String)]
+#[instruction(min_days_to_run: u8, target_liq_to_start: u64,event: String, side_a: String, side_b: String)]
 pub struct InitializePool<'info> {
     #[account(mut)]
     market_admin: Signer<'info>,
@@ -38,6 +38,8 @@ pub struct InitializePool<'info> {
 impl<'info> InitializePool<'info> {
     pub fn initialize_pool(
         &mut self,
+        min_days_to_run: u8,
+        target_liq_to_start: u64,
         event: String,
         side_a: String,
         side_b: String,
@@ -60,18 +62,17 @@ impl<'info> InitializePool<'info> {
 
         self.pool_config.set_inner(PoolConfig {
             market_admin: self.market_admin.key(),
+            pool_status: 0,
             pool_vault_state_bump: bumps.pool_vault,
             bump: bumps.pool_config,
+            min_days_to_run,
+            target_liq_to_start,
             event,
             side_a,
             side_b,
         });
 
-        self.pool_vault.set_inner(PoolVaultState {
-            market_admin: self.market_admin.key(),
-            pool_status: 0,
-            pool_fee: self.platform_config.pool_fee,
-            pool_treasury_bump: bumps.pool_vault,
+        self.pool_vault.set_inner(PoolVaultState {  
             amount_side_a: 0,
             amount_side_b: 0,
             bump: bumps.pool_vault,

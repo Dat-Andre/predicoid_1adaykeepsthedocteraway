@@ -10,8 +10,8 @@ pub use pool_config::*;
 pub mod pool_vault_state;
 pub use pool_vault_state::*;
 
-pub mod liquidity_provider_state;
-pub use liquidity_provider_state::*;
+pub mod liquidity;
+pub use liquidity::*;
 
 pub mod predictor;
 pub use predictor::*;

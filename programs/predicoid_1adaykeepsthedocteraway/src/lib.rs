@@ -25,11 +25,13 @@ pub mod predicoid_1adaykeepsthedocteraway {
 
     pub fn initialize_pool(
         ctx: Context<InitializePool>,
+        min_days_to_run: u8,
+        target_liq_to_start: u64,
         event: String,
         side_a: String,
         side_b: String,
     ) -> Result<()> {
         ctx.accounts
-            .initialize_pool(event, side_a, side_b, &ctx.bumps)
+            .initialize_pool(min_days_to_run, target_liq_to_start, event, side_a, side_b, &ctx.bumps)
     }
 }
