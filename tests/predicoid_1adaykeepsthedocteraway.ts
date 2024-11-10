@@ -24,7 +24,10 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
 
   it("Initialize platform Config", async () => {
 
-    const tx = await program.methods.initializePlatform().signers([platform_admin]).accountsPartial({
+    const tx = await program.methods.initializePlatform(
+      new BN(99),
+      new BN(70),
+    ).signers([platform_admin]).accountsPartial({
       admin: platform_admin.publicKey,
     }).signers([platform_admin]).rpc().then(confirmTx).then(log);
 
@@ -40,8 +43,8 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
 
     const platformFee = accountData.platformFee.toNumber();
     const poolFee = accountData.poolFee.toNumber();
-    assert(platformFee == 100);
-    assert(poolFee == 100);
+    assert(platformFee == 99);
+    assert(poolFee == 70);
   });
 
   it("Initialize Market", async () => {
@@ -51,14 +54,41 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
       platform_admin.publicKey.toBytes(), 
   ], program.programId)[0];  
 
-    const tx = await program.methods.initializeMarket("UpCenter".toString(), new BN(100))
-      .signers([marketAdmin]).accounts({
+  let errorCodeFee = '';
+    const tx1 = await program.methods.initializeMarket("UpCenter".toString(), new BN(101))
+      .signers([marketAdmin]).accountsPartial({
+        marketOwner: marketAdmin.publicKey,
+        platformConfig: configPda
+
+      }).rpc().then(confirmTx).then(log).catch(error => {
+        console.log("error: ",error);
+        errorCodeFee = error.error.errorCode.code;
+      });
+
+    assert(errorCodeFee === 'FeeOutOfBounds');
+
+
+    let nameTooLong = 'this string will exceed the allowed size';
+    let errorCodeName = '';
+    const tx2 = await program.methods.initializeMarket(nameTooLong, new BN(69))
+      .signers([marketAdmin]).accountsPartial({
+        marketOwner: marketAdmin.publicKey,
+        platformConfig: configPda
+
+      }).rpc().then(confirmTx).then(log).catch(error => {
+        console.log("error: ",error);
+        errorCodeName = error.error.errorCode.code;
+      });
+
+    assert(errorCodeName === 'MarketNameTooLong');
+
+    const tx3 = await program.methods.initializeMarket("UpCenter".toString(), new BN(69))
+      .signers([marketAdmin]).accountsPartial({
         marketOwner: marketAdmin.publicKey,
         platformConfig: configPda
 
       }).rpc().then(confirmTx).then(log);
 
-    
 
     const marketPda = PublicKey.findProgramAddressSync([
       Buffer.from("market"), 
@@ -69,26 +99,72 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
 
     const accountData = await program.account.market.fetch(marketPda);
     console.log("PDA Account Data:", accountData);
-    //console.log("Your transaction signature", tx);
 
     const marketFee = accountData.marketFee.toNumber();
     const marketName = accountData.marketName.toString();
-    assert(marketFee === 100);
+    assert(marketFee === 69);
     assert(marketName === "UpCenter"); 
+
+    
   });
 
+  it("Initialize Pool", async () => {
+
+    const eventDescription = "UpCenter Event";
+    const sideA = "Side A";
+    const sideB = "Side B";
+
+    const configPda = PublicKey.findProgramAddressSync([
+      Buffer.from("platform"), 
+      platform_admin.publicKey.toBytes(), 
+  ], program.programId)[0];
+  console.log("Config PDA:", configPda.toBase58());
+
+    const tx = await program.methods.initializePool(
+      eventDescription,
+      sideA,
+      sideB,
+    ).signers([marketAdmin]).accountsPartial({
+      marketAdmin: marketAdmin.publicKey,
+      platformConfig: configPda
+    }).rpc().then(confirmTx).then(log); 
 
 
+    const poolConfigPda = PublicKey.findProgramAddressSync([
+      Buffer.from("pool"), 
+      marketAdmin.publicKey.toBytes(),
+      platform_admin.publicKey.toBytes(),
+      Buffer.from(eventDescription)
+    ], program.programId)[0];  
+    console.log("Pool Config PDA:", poolConfigPda);
+
+    const poolStatePda = PublicKey.findProgramAddressSync([
+      Buffer.from("pool_vault"), 
+      poolConfigPda.toBytes(),
+    ], program.programId)[0];  
+
+    console.log("Pool State PDA:", poolStatePda);
+
+    const poolConfigData = await program.account.poolConfig.fetch(poolConfigPda);
+    console.log("Pool Config Data:", poolConfigData);
+    const poolVaultData = await program.account.poolVaultState.fetch(poolStatePda);
+    console.log("Pool Vault Data:", poolVaultData);
+    const poolFee = poolVaultData.poolFee.toNumber();
+    console.log("Pool Fee:", poolFee);
+    const amountSideA = poolVaultData.amountSideA.toNumber();
+    console.log("Amount Side A:", amountSideA);
+    const amountSideB = poolVaultData.amountSideB.toNumber();
+    console.log("Amount Side B:", amountSideB);
+    assert(poolFee === 70);
+    assert(amountSideA === 0);
+    assert(amountSideB === 0);
+  })
 
 
-
-
-
-
-
-
-
-
+/*   let nameTooLong = 'srefsdfsdfsdfsdfsdfsdfsdf sad asd';
+  const encoder = new TextEncoder();
+  const byteLength = encoder.encode(nameTooLong).length;
+  console.log("Byte Length:", byteLength); */
 
 
 
