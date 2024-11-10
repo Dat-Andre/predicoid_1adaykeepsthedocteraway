@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{error::ErrorCode, Config, PoolConfig, PoolVaultState};
 
 #[derive(Accounts)]
-#[instruction(event: String)]
+#[instruction(event: String, side_a: String, side_b: String)]
 pub struct InitializePool<'info> {
     #[account(mut)]
     market_admin: Signer<'info>,

@@ -15,8 +15,8 @@ declare_id!("gE5vWTmKd3ehmYwwUk67UJNhSC8jfPyeiTBAkshf6uT");
 pub mod predicoid_1adaykeepsthedocteraway {
     use super::*;
 
-    pub fn initialize_platform(ctx: Context<InitializePlatform>) -> Result<()> {
-        ctx.accounts.initialize_platform(&ctx.bumps)
+    pub fn initialize_platform(ctx: Context<InitializePlatform>, platform_fee: u64, pool_fee:u64) -> Result<()> {
+        ctx.accounts.initialize_platform(platform_fee, pool_fee, &ctx.bumps)
     }
 
     pub fn initialize_market(ctx: Context<InitializeMarket>, name: String, fee: u64) -> Result<()> {
