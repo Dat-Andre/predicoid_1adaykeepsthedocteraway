@@ -13,4 +13,7 @@ pub enum ErrorCode {
 
     #[msg("Fee not allowed")]
     FeeOutOfBounds,
+
+    #[msg("Fee not allowed")]
+    LiquidityProvidedBelowMinimum,
 }

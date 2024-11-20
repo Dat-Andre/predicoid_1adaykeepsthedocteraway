@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{error::ErrorCode, Config, Market};
 
 #[derive(Accounts)]
-#[instruction(name: String, fee: u64)]
+#[instruction(marketname: String, marketsocials: String,fee: u64)]
 pub struct InitializeMarket<'info> {
     #[account(mut)]
     pub market_owner: Signer<'info>,
@@ -31,24 +31,30 @@ pub struct InitializeMarket<'info> {
 impl<'info> InitializeMarket<'info> {
     pub fn initialize_market(
         &mut self,
-        name: String,
+        marketname: String,
+        marketsocials: String,
         fee: u64,
         bumps: &InitializeMarketBumps,
     ) -> Result<()> {
         require!(
-            name.len() > 0 && name.len() < 32,
+            marketname.len() > 0 && marketname.len() <= 32,
+            ErrorCode::MarketNameTooLong
+        );
+        require!(
+            marketsocials.len() > 0 && marketsocials.len() <= 16,
             ErrorCode::MarketNameTooLong
         );
 
         require!(fee > 0 && fee <= 100, ErrorCode::FeeOutOfBounds);
 
         self.market.set_inner(Market {
-            platform_admin: self.platform_config.admin,
+            /* platform_admin: self.platform_config.admin, */
             market_admin: self.market_owner.key(),
             market_treasury_bump: bumps.treasury,
             market_fee: fee,
             bump: bumps.market,
-            market_name: name,
+            market_name: marketname,
+            market_socials: marketsocials,
         });
         Ok(())
     }

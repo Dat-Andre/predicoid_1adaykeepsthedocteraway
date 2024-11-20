@@ -54,12 +54,12 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
       platform_admin.publicKey.toBytes(), 
   ], program.programId)[0];  
 
+
   let errorCodeFee = '';
-    const tx1 = await program.methods.initializeMarket("UpCenter".toString(), new BN(101))
+    const tx1 = await program.methods.initializeMarket("UpCenter".toString(), "socials".toString(), new BN(101))
       .signers([marketAdmin]).accountsPartial({
         marketOwner: marketAdmin.publicKey,
-        platformConfig: configPda
-
+        platformConfig: configPda,
       }).rpc().then(confirmTx).then(log).catch(error => {
         console.log("error: ",error);
         errorCodeFee = error.error.errorCode.code;
@@ -70,7 +70,7 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
 
     let nameTooLong = 'this string will exceed the allowed size';
     let errorCodeName = '';
-    const tx2 = await program.methods.initializeMarket(nameTooLong, new BN(69))
+    const tx2 = await program.methods.initializeMarket(nameTooLong, "socials".toString(), new BN(69))
       .signers([marketAdmin]).accountsPartial({
         marketOwner: marketAdmin.publicKey,
         platformConfig: configPda
@@ -82,7 +82,7 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
 
     assert(errorCodeName === 'MarketNameTooLong');
 
-    const tx3 = await program.methods.initializeMarket("UpCenter".toString(), new BN(69))
+    const tx3 = await program.methods.initializeMarket("UpCenter".toString(),"socials".toString(), new BN(69))
       .signers([marketAdmin]).accountsPartial({
         marketOwner: marketAdmin.publicKey,
         platformConfig: configPda
