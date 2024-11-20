@@ -14,6 +14,9 @@ pub enum ErrorCode {
     #[msg("Fee not allowed")]
     FeeOutOfBounds,
 
-    #[msg("Fee not allowed")]
+    #[msg("The amount of liquidity provided is below the minimum")]
     LiquidityProvidedBelowMinimum,
+
+    #[msg("The target liquidity specified is below the minimum")]
+    TargetLiquidityBelowMinimum,
 }

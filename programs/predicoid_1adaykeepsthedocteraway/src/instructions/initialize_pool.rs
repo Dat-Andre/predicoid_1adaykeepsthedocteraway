@@ -69,6 +69,11 @@ impl<'info> InitializePool<'info> {
             ErrorCode::SideNameTooLong
         );
 
+        require!(
+            target_liq_to_start >= 5_000_000_000,
+            ErrorCode::TargetLiquidityBelowMinimum
+        );
+
         self.pool_config.set_inner(PoolConfig {
             pool_status: 0,
             pool_vault_state_bump: bumps.pool_vault,
