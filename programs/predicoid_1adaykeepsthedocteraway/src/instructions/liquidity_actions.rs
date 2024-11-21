@@ -41,7 +41,7 @@ pub struct LiquidityActions<'info> {
     #[account(
         init_if_needed,
         payer = provider,
-        seeds = [b"liquidity_position", pool_config.key().as_ref()],
+        seeds = [b"liquidity_position", pool_config.key().as_ref(), provider.key().as_ref()],
         bump,
         space = 8 + LiquidityPosition::INIT_SPACE
     )]
