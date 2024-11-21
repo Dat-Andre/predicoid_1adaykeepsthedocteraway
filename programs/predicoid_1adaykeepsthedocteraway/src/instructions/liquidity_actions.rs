@@ -3,37 +3,44 @@ use anchor_lang::{
     system_program::{transfer, Transfer},
 };
 
-use crate::{Config, LiquidityPosition, LiquidityState, PoolConfig, PoolVaultState};
+use crate::{Config, LiquidityPosition, LiquidityState, Market, PoolConfig, PoolVaultState};
 
 use crate::error::ErrorCode;
 
 #[derive(Accounts)]
+#[instruction(amount: u64)]
 pub struct LiquidityActions<'info> {
     #[account(mut)]
-    pub market_admin: Signer<'info>,
+    pub provider: Signer<'info>,
     #[account(
         mut,
         seeds = [
         b"pool", 
-        market_admin.key().as_ref(),
+        market.market_admin.key().as_ref(),
         platform_config.admin.key().as_ref(),
         pool_config.event.as_str().as_bytes()],
         bump = pool_config.bump,
    )]
     pub pool_config: Account<'info, PoolConfig>,
     #[account(
+        seeds = [b"market", market.market_admin.key().as_ref(), platform_config.key().as_ref()],
+        bump = market.bump,
+    )]
+    pub market: Account<'info, Market>,
+    #[account(
         seeds = [b"platform", platform_config.admin.key().as_ref()],
         bump = platform_config.bump,
     )]
     platform_config: Account<'info, Config>,
     #[account(
+        mut,
         seeds = [b"pool_vault", pool_config.key().as_ref()],
         bump = pool_config.pool_vault_state_bump,
     )]
     pub pool_vault: Account<'info, PoolVaultState>,
     #[account(
         init_if_needed,
-        payer = market_admin,
+        payer = provider,
         seeds = [b"liquidity_position", pool_config.key().as_ref()],
         bump,
         space = 8 + LiquidityPosition::INIT_SPACE
@@ -50,15 +57,16 @@ pub struct LiquidityActions<'info> {
 impl<'info> LiquidityActions<'info> {
     pub fn add_liquidity(&mut self, mut amount: u64) -> Result<()> {
         // tranfer amount from user to pool_vault
+    
         require!(
-            amount > 0 && amount < 500_000_000,
+            amount > 500_000_000,
             ErrorCode::LiquidityProvidedBelowMinimum
         );
 
         let cpi_program = self.system_program.to_account_info();
 
         let cpi_accounts = Transfer {
-            from: self.market_admin.to_account_info(),
+            from: self.provider.to_account_info(),
             to: self.pool_vault.to_account_info(),
         };
 
@@ -93,7 +101,7 @@ impl<'info> LiquidityActions<'info> {
 
         // check if pool status is looking for start liqudity, and if so, check if target liq is reached
         if self.pool_config.pool_status == 0
-            && self.pool_vault.amount_side_a >= self.pool_config.target_liq_to_start
+            && self.liquidity_state.current_liquidity_amount >= self.pool_config.target_liq_to_start
         {
             self.pool_config.pool_status = 1;
         }
