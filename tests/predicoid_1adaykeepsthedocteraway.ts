@@ -16,10 +16,12 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
   const marketAdmin = Keypair.generate();
   const liquidityProvider_1 = Keypair.generate();
   const liquidityProvider_2 = Keypair.generate();
-  
+
+  let errorCode = '';
+
 
   it("Prepare accounts", async () => {
-    
+
     let airdrop1 = await anchor.getProvider().connection.requestAirdrop(platform_admin.publicKey, 500 * LAMPORTS_PER_SOL).then(confirmTx).then(log);
     let airdrop2 = await anchor.getProvider().connection.requestAirdrop(marketAdmin.publicKey, 500 * LAMPORTS_PER_SOL).then(confirmTx).then(log);
     let airdrop3 = await anchor.getProvider().connection.requestAirdrop(liquidityProvider_1.publicKey, 500 * LAMPORTS_PER_SOL).then(confirmTx).then(log);
@@ -29,64 +31,64 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
   it("Initialize platform Config", async () => {
 
     const tx = await program.methods.initializePlatform(
-      new BN(99),
-      new BN(70),
+      99,
+      /*  new BN(70), */
     ).signers([platform_admin]).accountsPartial({
       admin: platform_admin.publicKey,
     }).signers([platform_admin]).rpc().then(confirmTx).then(log);
 
     const configPda = PublicKey.findProgramAddressSync([
-      Buffer.from("platform"), 
-      platform_admin.publicKey.toBytes(), 
-    ], program.programId)[0];  
-    
+      Buffer.from("platform"),
+      platform_admin.publicKey.toBytes(),
+    ], program.programId)[0];
+
 
     const accountData = await program.account.config.fetch(configPda);
     console.log("PDA Account Data:", accountData);
     //console.log("Your transaction signature", tx);
 
-    const platformFee = accountData.platformFee.toNumber();
-    const poolFee = accountData.poolFee.toNumber();
+    const platformFee = accountData.platformFee;
+    /* const poolFee = accountData.poolFee.toNumber(); */
     assert(platformFee == 99);
-    assert(poolFee == 70);
+    /*  assert(poolFee == 70); */
   });
 
   it("Initialize Market", async () => {
 
     const configPda = PublicKey.findProgramAddressSync([
-      Buffer.from("platform"), 
-      platform_admin.publicKey.toBytes(), 
-  ], program.programId)[0];  
+      Buffer.from("platform"),
+      platform_admin.publicKey.toBytes(),
+    ], program.programId)[0];
 
 
-  let errorCodeFee = '';
+    //let errorCodeFee = '';
     const tx1 = await program.methods.initializeMarket("UpCenter".toString(), "socials".toString(), new BN(101))
       .signers([marketAdmin]).accountsPartial({
         marketOwner: marketAdmin.publicKey,
         platformConfig: configPda,
       }).rpc().then(confirmTx).then(log).catch(error => {
-        console.log("error: ",error);
-        errorCodeFee = error.error.errorCode.code;
+        console.log("error: ", error);
+        errorCode = error.error.errorCode.code;
       });
 
-    assert(errorCodeFee === 'FeeOutOfBounds');
+    assert(errorCode === 'FeeOutOfBounds');
 
 
     let nameTooLong = 'this string will exceed the allowed size';
-    let errorCodeName = '';
+    errorCode = '';
     const tx2 = await program.methods.initializeMarket(nameTooLong, "socials".toString(), new BN(69))
       .signers([marketAdmin]).accountsPartial({
         marketOwner: marketAdmin.publicKey,
         platformConfig: configPda
 
       }).rpc().then(confirmTx).then(log).catch(error => {
-        console.log("error: ",error);
-        errorCodeName = error.error.errorCode.code;
+        console.log("error: ", error);
+        errorCode = error.error.errorCode.code;
       });
 
-    assert(errorCodeName === 'MarketNameTooLong');
+    assert(errorCode === 'MarketNameTooLong');
 
-    const tx3 = await program.methods.initializeMarket("UpCenter".toString(),"socials".toString(), new BN(69))
+    const tx3 = await program.methods.initializeMarket("UpCenter".toString(), "socials".toString(), new BN(69))
       .signers([marketAdmin]).accountsPartial({
         marketOwner: marketAdmin.publicKey,
         platformConfig: configPda
@@ -95,11 +97,11 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
 
 
     const marketPda = PublicKey.findProgramAddressSync([
-      Buffer.from("market"), 
+      Buffer.from("market"),
       marketAdmin.publicKey.toBytes(),
       configPda.toBytes(),
-    ], program.programId)[0];  
-    
+    ], program.programId)[0];
+
 
     const accountData = await program.account.market.fetch(marketPda);
     console.log("PDA Account Data:", accountData);
@@ -107,9 +109,9 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     const marketFee = accountData.marketFee.toNumber();
     const marketName = accountData.marketName.toString();
     assert(marketFee === 69);
-    assert(marketName === "UpCenter"); 
+    assert(marketName === "UpCenter");
 
-    
+
   });
 
   it("Initialize Pool", async () => {
@@ -119,10 +121,10 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     const sideB = "Side B";
 
     const configPda = PublicKey.findProgramAddressSync([
-      Buffer.from("platform"), 
-      platform_admin.publicKey.toBytes(), 
-  ], program.programId)[0];
-  console.log("Config PDA:", configPda.toBase58());
+      Buffer.from("platform"),
+      platform_admin.publicKey.toBytes(),
+    ], program.programId)[0];
+    console.log("Config PDA:", configPda.toBase58());
 
     const tx = await program.methods.initializePool(
       new BN(1).toNumber(),
@@ -133,21 +135,21 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     ).signers([marketAdmin]).accountsPartial({
       marketAdmin: marketAdmin.publicKey,
       platformConfig: configPda
-    }).rpc().then(confirmTx).then(log); 
+    }).rpc().then(confirmTx).then(log);
 
 
     const poolConfigPda = PublicKey.findProgramAddressSync([
-      Buffer.from("pool"), 
+      Buffer.from("pool"),
       marketAdmin.publicKey.toBytes(),
       platform_admin.publicKey.toBytes(),
       Buffer.from(eventDescription)
-    ], program.programId)[0];  
+    ], program.programId)[0];
     console.log("Pool Config PDA:", poolConfigPda);
 
     const poolStatePda = PublicKey.findProgramAddressSync([
-      Buffer.from("pool_vault"), 
+      Buffer.from("pool_vault"),
       poolConfigPda.toBytes(),
-    ], program.programId)[0];  
+    ], program.programId)[0];
 
     console.log("Pool State PDA:", poolStatePda);
 
@@ -159,7 +161,7 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     console.log("Amount Side A:", amountSideA);
     const amountSideB = poolVaultData.amountSideB.toNumber();
     console.log("Amount Side B:", amountSideB);
-    
+
     assert(amountSideA === 0);
     assert(amountSideB === 0);
     assert(poolConfigData.minDaysToRun === 1);
@@ -172,71 +174,132 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     const sideA = "Side A";
     const sideB = "Side B";
 
-    
+
 
     const poolConfigPda = PublicKey.findProgramAddressSync([
-      Buffer.from("pool"), 
+      Buffer.from("pool"),
       marketAdmin.publicKey.toBytes(),
       platform_admin.publicKey.toBytes(),
       Buffer.from(eventDescription)
-    ], program.programId)[0];  
+    ], program.programId)[0];
     console.log("Pool Config PDA:", poolConfigPda.toBase58());
 
-  const configPlatformPda = PublicKey.findProgramAddressSync([
-    Buffer.from("platform"), 
-    platform_admin.publicKey.toBytes(), 
-  ], program.programId)[0];
-  console.log("Platform Config PDA:", configPlatformPda.toBase58());
+    const configPlatformPda = PublicKey.findProgramAddressSync([
+      Buffer.from("platform"),
+      platform_admin.publicKey.toBytes(),
+    ], program.programId)[0];
+    console.log("Platform Config PDA:", configPlatformPda.toBase58());
 
-  const marketPda = PublicKey.findProgramAddressSync([
-    Buffer.from("market"), 
-    marketAdmin.publicKey.toBytes(),
-    configPlatformPda.toBytes(),
-  ], program.programId)[0];  
-  console.log("Market PDA:", marketPda.toBase58());
+    const marketPda = PublicKey.findProgramAddressSync([
+      Buffer.from("market"),
+      marketAdmin.publicKey.toBytes(),
+      configPlatformPda.toBytes(),
+    ], program.programId)[0];
+    console.log("Market PDA:", marketPda.toBase58());
 
-  const poolStatePda = PublicKey.findProgramAddressSync([
-    Buffer.from("pool_vault"), 
-    poolConfigPda.toBytes(),
-  ], program.programId)[0];  
-  console.log("Pool State PDA:", poolStatePda.toBase58());
+    const poolStatePda = PublicKey.findProgramAddressSync([
+      Buffer.from("pool_vault"),
+      poolConfigPda.toBytes(),
+    ], program.programId)[0];
+    console.log("Pool State PDA:", poolStatePda.toBase58());
 
-  const tx = await program.methods.addLiquidity(
+    errorCode = '';
+
+    const txError = await program.methods.addLiquidity(
       new BN(1_000_000_000)
-  ).signers([liquidityProvider_1]).accountsPartial({
+    ).signers([liquidityProvider_1]).accountsPartial({
       provider: liquidityProvider_1.publicKey,
       poolConfig: poolConfigPda,
       platformConfig: configPlatformPda,
-      poolVault:poolStatePda,
+      poolVault: poolStatePda,
       market: marketPda
-  }).rpc().then(confirmTx).then(log); 
+    }).rpc().then(confirmTx).then(log).catch(error => {
+      console.log("error: ", error);
+      errorCode = error.error.errorCode.code;
+    });
 
-  const poolLiquidityState_ = PublicKey.findProgramAddressSync([
-    Buffer.from("liquidity_state"), 
-    poolConfigPda.toBytes(),
-  ], program.programId)[0];  
-  console.log("Pool Liquidity State:", poolLiquidityState_.toBase58());
+    assert(errorCode === 'PlatformIsClosed');
+
+    // update platform status
+    const configPda = PublicKey.findProgramAddressSync([
+      Buffer.from("platform"),
+      platform_admin.publicKey.toBytes(),
+    ], program.programId)[0];
+
+    const configPlatformData1 = await program.account.config.fetch(configPda);
+    assert(configPlatformData1.admin.toBase58 === platform_admin.publicKey.toBase58);
+    console.log("Platform Config Data:", configPlatformData1);
+    console.log("admin:", configPlatformData1.admin.toBase58());
+
+    const txUpdateStatus = await program.methods.updatePlatformStatus(1)
+      .signers([platform_admin]).accountsPartial({ platformConfig: configPda, admin: platform_admin.publicKey })
+      .rpc().then(confirmTx).then(log);
 
 
-  const poolVaultData = await program.account.poolVaultState.fetch(poolStatePda);
-  console.log("Pool State PDA:", poolVaultData);
-  assert(poolVaultData.amountSideA.toString() === "500000000");
-  assert(poolVaultData.amountSideB.toString() === "500000000");
+    const configPlatformData2 = await program.account.config.fetch(configPda);
 
-  const poolLiquidityState = await program.account.liquidityState.fetch(poolLiquidityState_);
-  console.log("Pool Liquidity State PDA:", poolLiquidityState);
+    assert(configPlatformData2.status === 1);
 
-  const poolLiquidityPosition = PublicKey.findProgramAddressSync([
-    Buffer.from("liquidity_position"), 
-    poolConfigPda.toBytes(),
-    liquidityProvider_1.publicKey.toBytes(),
-  ], program.programId)[0];  
-  console.log("Pool/Liquidity Position/Per user:", poolLiquidityPosition.toBase58());
 
-  const liquidityPosition = await program.account.liquidityPosition.fetch(poolLiquidityPosition);
-  console.log("Liquidity Position:", liquidityPosition);
-  assert(liquidityPosition.amountProvided.toString() === "1000000000");
-  
+    const tx = await program.methods.addLiquidity(
+      new BN(1_000_000_000)
+    ).signers([liquidityProvider_1]).accountsPartial({
+      provider: liquidityProvider_1.publicKey,
+      poolConfig: poolConfigPda,
+      platformConfig: configPlatformPda,
+      poolVault: poolStatePda,
+      market: marketPda
+    }).rpc().then(confirmTx).then(log);
+
+    const poolLiquidityState_ = PublicKey.findProgramAddressSync([
+      Buffer.from("liquidity_state"),
+      poolConfigPda.toBytes(),
+    ], program.programId)[0];
+    console.log("Pool Liquidity State:", poolLiquidityState_.toBase58());
+
+
+    const poolVaultData = await program.account.poolVaultState.fetch(poolStatePda);
+    console.log("Pool State PDA:", poolVaultData);
+    assert(poolVaultData.amountSideA.toString() === "500000000");
+    assert(poolVaultData.amountSideB.toString() === "500000000");
+
+    const poolLiquidityState = await program.account.liquidityState.fetch(poolLiquidityState_);
+    console.log("Pool Liquidity State PDA:", poolLiquidityState);
+
+    const poolLiquidityPosition = PublicKey.findProgramAddressSync([
+      Buffer.from("liquidity_position"),
+      poolConfigPda.toBytes(),
+      liquidityProvider_1.publicKey.toBytes(),
+    ], program.programId)[0];
+    console.log("Pool/Liquidity Position/Per user:", poolLiquidityPosition.toBase58());
+
+    const liquidityPosition = await program.account.liquidityPosition.fetch(poolLiquidityPosition);
+    console.log("Liquidity Position:", liquidityPosition);
+
+    assert(liquidityPosition.amountProvided.toString() === "1000000000");
+
+    const tx2 = await program.methods.addLiquidity(
+      new BN(10_000_000_000)
+    ).signers([liquidityProvider_1]).accountsPartial({
+      provider: liquidityProvider_1.publicKey,
+      poolConfig: poolConfigPda,
+      platformConfig: configPlatformPda,
+      poolVault: poolStatePda,
+      market: marketPda
+    }).rpc().then(confirmTx).then(log);
+
+    const poolVaultData1 = await program.account.poolVaultState.fetch(poolStatePda);
+    console.log("Pool State PDA:", poolVaultData1);
+
+    const poolLiquidityState1 = await program.account.liquidityState.fetch(poolLiquidityState_);
+    console.log("Pool Liquidity State PDA:", poolLiquidityState1);
+
+    const liquidityPosition1 = await program.account.liquidityPosition.fetch(poolLiquidityPosition);
+    console.log("Liquidity Position:", liquidityPosition1);
+
+    const poolConfigPda1 = await program.account.poolConfig.fetch(poolConfigPda);
+    console.log("Pool Config Data:", poolConfigPda1);
+
   })
 
 
@@ -263,10 +326,10 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
   }
 
   const log = async (signature: string): Promise<string> => {
-    if(SOLANA_VALIDATOR){
+    if (SOLANA_VALIDATOR) {
       console.log(
-      `Your transaction signature: https://explorer.solana.com/transaction/${signature}?cluster=custom`)
-    }else{
+        `Your transaction signature: https://explorer.solana.com/transaction/${signature}?cluster=custom`)
+    } else {
       console.log(
         `signature: ${signature}`
       );
