@@ -21,7 +21,7 @@ pub mod predicoid_1adaykeepsthedocteraway {
         /* pool_fee: u64, */
     ) -> Result<()> {
         ctx.accounts
-            .initialize_platform(platform_fee,/*  pool_fee, */ &ctx.bumps)
+            .initialize_platform(platform_fee, /*  pool_fee, */ &ctx.bumps)
     }
 
     pub fn update_platform_fee(ctx: Context<UpdatePlatformConfig>, fee: u16) -> Result<()> {
@@ -62,5 +62,9 @@ pub mod predicoid_1adaykeepsthedocteraway {
 
     pub fn add_liquidity(ctx: Context<LiquidityActions>, amount: u64) -> Result<()> {
         ctx.accounts.add_liquidity(amount, &ctx.bumps)
+    }
+
+    pub fn remove_liquidity(ctx: Context<LiquidityActions>, amount: u64) -> Result<()> {
+        ctx.accounts.remove_liquidity(amount)
     }
 }
