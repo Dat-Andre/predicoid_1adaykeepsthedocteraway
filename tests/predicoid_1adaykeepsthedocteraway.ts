@@ -300,7 +300,94 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     const poolConfigPda1 = await program.account.poolConfig.fetch(poolConfigPda);
     console.log("Pool Config Data:", poolConfigPda1);
 
+    // assert amount provided is correct on the liquidity position
+    assert(liquidityPosition1.amountProvided.toString() === "11000000000");
+
+    // assert amount provided is correct liquidity state
+    assert(poolLiquidityState1.currentLiquidityAmount.toString() === "11000000000");
+
+    // assert state of the pool config status is now 1 after target_liq_to_start was reached
+    assert(poolConfigPda1.poolStatus === 1);
+
   })
+
+  it("remove liquidity", async () => {
+
+    const poolConfigPda = PublicKey.findProgramAddressSync([
+      Buffer.from("pool"),
+      marketAdmin.publicKey.toBytes(),
+      platform_admin.publicKey.toBytes(),
+      Buffer.from("UpCenter Event")
+    ], program.programId)[0];
+
+    const configPlatformPda = PublicKey.findProgramAddressSync([
+      Buffer.from("platform"),
+      platform_admin.publicKey.toBytes(),
+    ], program.programId)[0];
+
+    const marketPda = PublicKey.findProgramAddressSync([
+      Buffer.from("market"),
+      marketAdmin.publicKey.toBytes(),
+      configPlatformPda.toBytes(),
+    ], program.programId)[0];
+
+    const poolStatePda = PublicKey.findProgramAddressSync([
+      Buffer.from("pool_vault"),
+      poolConfigPda.toBytes(),
+    ], program.programId)[0];
+
+    const tx = await program.methods.removeLiquidity(
+      new BN(1_000_000_000)
+    ).signers([liquidityProvider_1]).accountsPartial({
+      provider: liquidityProvider_1.publicKey,
+      poolConfig: poolConfigPda,
+      platformConfig: configPlatformPda,
+      poolVault: poolStatePda,
+      market: marketPda
+    }).rpc().then(confirmTx).then(log);
+
+    const poolLiquidityState_ = PublicKey.findProgramAddressSync([
+      Buffer.from("liquidity_state"),
+      poolConfigPda.toBytes(),
+    ], program.programId)[0];
+
+    const poolLiquidityPosition = PublicKey.findProgramAddressSync([
+      Buffer.from("liquidity_position"),
+      poolConfigPda.toBytes(),
+      liquidityProvider_1.publicKey.toBytes(),
+    ], program.programId)[0];
+
+
+
+
+    const poolVaultData1 = await program.account.poolVaultState.fetch(poolStatePda);
+    console.log("Pool State PDA:", poolVaultData1);
+
+    const poolLiquidityState1 = await program.account.liquidityState.fetch(poolLiquidityState_);
+    console.log("Pool Liquidity State PDA:", poolLiquidityState1);
+
+    const liquidityPosition1 = await program.account.liquidityPosition.fetch(poolLiquidityPosition);
+    console.log("Liquidity Position:", liquidityPosition1);
+
+    const poolConfigPda1 = await program.account.poolConfig.fetch(poolConfigPda);
+    console.log("Pool Config Data:", poolConfigPda1);
+
+    // assert amount provided is correct on the liquidity position
+    console.log("Amount Provided:", liquidityPosition1.amountProvided.toString());
+    assert(liquidityPosition1.amountProvided.toString() === "10000000000");
+
+    // assert amount provided is correct liquidity state
+    assert(poolLiquidityState1.currentLiquidityAmount.toString() === "10000000000");
+
+    assert(poolVaultData1.amountSideA.toString() === "5000000000");
+    assert(poolVaultData1.amountSideB.toString() === "5000000000");
+
+    assert(liquidityPosition1.amountProvided.toString() === "10000000000");
+
+    assert(poolLiquidityState1.currentLiquidityAmount.toString() === "10000000000");
+
+
+  });
 
 
 
