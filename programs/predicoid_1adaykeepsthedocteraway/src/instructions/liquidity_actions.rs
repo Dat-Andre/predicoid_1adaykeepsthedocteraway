@@ -30,6 +30,7 @@ pub struct LiquidityActions<'info> {
     #[account(
         seeds = [b"platform", platform_config.admin.key().as_ref()],
         bump = platform_config.bump,
+        constraint = platform_config.status == 1 @ErrorCode::PlatformIsClosed,
     )]
     platform_config: Account<'info, Config>,
     #[account(
@@ -47,6 +48,7 @@ pub struct LiquidityActions<'info> {
     )]
     pub liquidity_position: Account<'info, LiquidityPosition>,
     #[account(
+        mut,
         seeds = [b"liquidity_state", pool_config.key().as_ref()],
         bump = liquidity_state.bump,
     )]
@@ -55,7 +57,7 @@ pub struct LiquidityActions<'info> {
 }
 
 impl<'info> LiquidityActions<'info> {
-    pub fn add_liquidity(&mut self, mut amount: u64) -> Result<()> {
+    pub fn add_liquidity(&mut self, mut amount: u64, bumps: &LiquidityActionsBumps) -> Result<()> {
         // tranfer amount from user to pool_vault
     
         require!(
@@ -89,7 +91,13 @@ impl<'info> LiquidityActions<'info> {
             self.transfer_sol_restake(pending_fees)?;
             amount += pending_fees;
         }
-        // update LiquidityPosition
+        // check if LiquidityPosition was initialized at this moment and save bumps
+        
+        if !self.liquidity_position.initialized {
+            self.liquidity_position.initialized = true;
+            self.liquidity_position.bump = bumps.liquidity_position;
+        }
+        //update LiquidityPosition
         self.liquidity_position.amount_provided += amount;
         self.liquidity_position.last_accumulated_reward_per_share =
             self.liquidity_state.accumulated_reward_per_share;
@@ -108,10 +116,18 @@ impl<'info> LiquidityActions<'info> {
         Ok(())
     }
 
-    /* pub fn remove_liquidity(&mut self, amount: u64) -> Result<()> {
-        /* self.pool_vault.amount_provided -= amount; */
+    pub fn remove_liquidity(&mut self, amount: u64) -> Result<()> {
+        
+        
+
+
+
+
+
+
+
         Ok(())
-    } */
+    }
 
     pub fn transfer_sol_restake(&mut self, amount: u64) -> Result<()> {
         let seeds = &[

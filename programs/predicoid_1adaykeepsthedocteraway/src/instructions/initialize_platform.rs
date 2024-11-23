@@ -25,15 +25,15 @@ pub struct InitializePlatform<'info> {
 impl<'info> InitializePlatform<'info> {
     pub fn initialize_platform(
         &mut self,
-        platform_fee: u64,
-        pool_fee: u64,
+        platform_fee: u16,
+        /* pool_fee: u64, */
         bumps: &InitializePlatformBumps,
     ) -> Result<()> {
         self.config.set_inner(Config {
             admin: self.admin.key(),
             treasury: self.treasury.key(),
             platform_fee: platform_fee,
-            pool_fee: pool_fee,
+            /* pool_fee: pool_fee, */
             status: 0,
             bump: bumps.config,
         });

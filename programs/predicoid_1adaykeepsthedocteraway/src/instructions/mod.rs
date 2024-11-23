@@ -9,3 +9,6 @@ pub use initialize_pool::*;
 
 pub mod liquidity_actions;
 pub use liquidity_actions::*;
+
+pub mod update_platform_config;
+pub use update_platform_config::*;

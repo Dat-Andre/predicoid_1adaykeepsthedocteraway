@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 pub struct LiquidityPosition {
     pub amount_provided: u64,
     pub last_accumulated_reward_per_share: u64,
+    pub initialized: bool,
     pub bump: u8,
 }
 

@@ -2,6 +2,10 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
+
+    #[msg("We are moving things around")]
+    PlatformIsClosed,
+
     #[msg("Market name too long")]
     MarketNameTooLong,
 

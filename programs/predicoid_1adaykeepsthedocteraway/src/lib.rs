@@ -17,11 +17,19 @@ pub mod predicoid_1adaykeepsthedocteraway {
 
     pub fn initialize_platform(
         ctx: Context<InitializePlatform>,
-        platform_fee: u64,
-        pool_fee: u64,
+        platform_fee: u16,
+        /* pool_fee: u64, */
     ) -> Result<()> {
         ctx.accounts
-            .initialize_platform(platform_fee, pool_fee, &ctx.bumps)
+            .initialize_platform(platform_fee,/*  pool_fee, */ &ctx.bumps)
+    }
+
+    pub fn update_platform_fee(ctx: Context<UpdatePlatformConfig>, fee: u16) -> Result<()> {
+        ctx.accounts.update_platform_fee(fee)
+    }
+
+    pub fn update_platform_status(ctx: Context<UpdatePlatformConfig>, status: u8) -> Result<()> {
+        ctx.accounts.update_platform_status(status)
     }
 
     pub fn initialize_market(
@@ -53,6 +61,6 @@ pub mod predicoid_1adaykeepsthedocteraway {
     }
 
     pub fn add_liquidity(ctx: Context<LiquidityActions>, amount: u64) -> Result<()> {
-        ctx.accounts.add_liquidity(amount)
+        ctx.accounts.add_liquidity(amount, &ctx.bumps)
     }
 }
