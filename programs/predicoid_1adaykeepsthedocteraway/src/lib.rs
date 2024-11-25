@@ -67,4 +67,8 @@ pub mod predicoid_1adaykeepsthedocteraway {
     pub fn remove_liquidity(ctx: Context<LiquidityActions>, amount: u64) -> Result<()> {
         ctx.accounts.remove_liquidity(amount)
     }
+
+    pub fn place_prediction(ctx: Context<Prediction>, amount: u64, side: String) -> Result<()> {
+        ctx.accounts.predict(amount, side, &ctx.bumps)
+    }
 }

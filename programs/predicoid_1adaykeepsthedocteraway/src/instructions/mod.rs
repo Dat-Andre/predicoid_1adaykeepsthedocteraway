@@ -12,3 +12,6 @@ pub use liquidity_actions::*;
 
 pub mod update_platform_config;
 pub use update_platform_config::*;
+
+pub mod prediction;
+pub use prediction::*;

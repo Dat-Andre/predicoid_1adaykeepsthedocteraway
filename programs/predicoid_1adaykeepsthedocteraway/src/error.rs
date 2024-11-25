@@ -5,6 +5,9 @@ pub enum ErrorCode {
     #[msg("We are moving things around")]
     PlatformIsClosed,
 
+    #[msg("Too soon or too late to place a prediction")]
+    PoolIsClosed,
+
     #[msg("Market name too long")]
     MarketNameTooLong,
 
@@ -28,4 +31,10 @@ pub enum ErrorCode {
 
     #[msg("Not enough lamports on the vault state to perform the withdrawal")]
     NotEnoughLamports,
+
+    #[msg("Prediction amount not allowed")]
+    InvalidAmount,
+
+    #[msg("Pool side not allowed")]
+    InvalidSide,
 }
