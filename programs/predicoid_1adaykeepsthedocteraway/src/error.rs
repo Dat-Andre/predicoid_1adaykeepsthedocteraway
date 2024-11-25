@@ -37,4 +37,13 @@ pub enum ErrorCode {
 
     #[msg("Pool side not allowed")]
     InvalidSide,
+
+    #[msg("Predictor position not initialized or without any amount")]
+    PredictorPositionNotInitialized,
+
+    #[msg("Something went wrong with the fees split logic")]
+    FeeSplitLogicError,
+
+    #[msg("Something went wrong with the fees and amount calculation")]
+    AmountAndFeeCalculationError,
 }

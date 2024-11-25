@@ -69,6 +69,10 @@ pub mod predicoid_1adaykeepsthedocteraway {
     }
 
     pub fn place_prediction(ctx: Context<Prediction>, amount: u64, side: String) -> Result<()> {
-        ctx.accounts.predict(amount, side, &ctx.bumps)
+        ctx.accounts.place_prediction(amount, side, &ctx.bumps)
+    }
+
+    pub fn remove_prediction(ctx: Context<Prediction>, amount: u64, side: String) -> Result<()> {
+        ctx.accounts.remove_prediction(amount, side)
     }
 }
