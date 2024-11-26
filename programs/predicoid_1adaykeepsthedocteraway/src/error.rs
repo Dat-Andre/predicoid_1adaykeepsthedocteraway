@@ -46,4 +46,7 @@ pub enum ErrorCode {
 
     #[msg("Something went wrong with the fees and amount calculation")]
     AmountAndFeeCalculationError,
+
+    #[msg("The vault should have more money than the sum of sides")]
+    PoolVaultAmountError,
 }

@@ -51,11 +51,13 @@ pub struct Prediction<'info> {
     )]
     pub liquidity_state: Account<'info, LiquidityState>,
     #[account(
+        mut,
         seeds = [b"treasury", platform_config.key().as_ref()],
         bump,
     )]
     pub treasury: SystemAccount<'info>,
     #[account(
+        mut,
         seeds = [b"market_treasury", market.market_admin.key().as_ref()],
         bump = market.market_treasury_bump,
     )]
@@ -129,13 +131,22 @@ impl<'info> Prediction<'info> {
             // update predictor position
             if side == "A" {
                 self.predictor_position.side_a_amount -= amount;
+                if self.predictor_position.side_a_amount == 0 {
+                    self.predictor_position.side_a_entry_odd = 0;
+                }
             } else {
                 self.predictor_position.side_b_amount -= amount;
+                if self.predictor_position.side_b_amount == 0 {
+                    self.predictor_position.side_b_entry_odd = 0;
+                }
             }
 
             // update pool vault state
-            self.pool_vault.amount_side_a -= amount / 2 + amount % 2;
-            self.pool_vault.amount_side_b -= amount / 2;
+            let total_amount_to_deduct = amount_to_predictor.checked_add(market_fee_amount).unwrap().checked_add(liquidity_fee_amount).unwrap().checked_add(platform_fee_amount).unwrap();
+            self.pool_vault.amount_side_a -= total_amount_to_deduct / 2 + total_amount_to_deduct % 2;
+            self.pool_vault.amount_side_b -= total_amount_to_deduct / 2;
+
+             require!(self.pool_vault.amount_side_a.checked_add(self.pool_vault.amount_side_b).unwrap() < self.pool_vault.get_lamports(), ErrorCode::PoolVaultAmountError);
 
             // send fee to market vault
             self.transfer_sol_from_pool_vault_to_market_vault(market_fee_amount)?;
@@ -199,25 +210,61 @@ impl<'info> Prediction<'info> {
         self.market_treasury.add_lamports(amount)?;
 
         Ok(())
+
+        
     }
+
+    /* pub fn calculate_amount_to_take_and_fees(&self, amount: u64, side: &String) -> Option<(u64, u64, u64, u64)> {
+        // Extract shared variables
+        // Determine the side-specific values
+        let (side_amount, entry_odd) = if side == "A" {
+            (self.pool_vault.amount_side_a, self.predictor_position.side_a_entry_odd)
+        } else {
+            (self.pool_vault.amount_side_b, self.predictor_position.side_b_entry_odd)
+        };
+
+        // Calculate the total pool amount
+        let total_amount = self.pool_vault.amount_side_a.checked_add(self.pool_vault.amount_side_b)? as f64;
+
+        // Compute current odds and delta odds
+        let current_odd = (side_amount as f64 / total_amount) * 10_000.0;
+        let delta_odd = current_odd as i64 - entry_odd as i64;
+
+        // Calculate the amount to receive
+        let amount_receive = (amount * ((10_000 + delta_odd) as u64)) / 10_000;
+
+        // Calculate market fees
+        let total_market_fee = (amount_receive * self.market.market_fee) / 10_000;
+        let liquidity_fee = total_market_fee / 2 + total_market_fee % 2;
+        let market_fee = total_market_fee / 2;
+
+        // Calculate platform fees
+        let platform_fee = (amount_receive * self.platform_config.platform_fee as u64) / 10_000;
+
+        // Final amount after fees
+        let final_amount = amount_receive - (market_fee + platform_fee);
+
+        // Return the results as a tuple
+        Some((final_amount, market_fee, liquidity_fee, platform_fee))
+    } */
 
     pub fn calculate_amount_to_take_and_fees(&self, amount: u64, side: &String) -> Option<(u64, u64, u64, u64)> {
         if side == "A" {
-            let current_odd: f64 = (self.pool_vault.amount_side_a as f64 / (self.pool_vault.amount_side_a  + self.pool_vault.amount_side_b)  as f64) * 10_000 as f64;
-            let delta_odd = current_odd as u64 - self.predictor_position.side_a_entry_odd;
-            let amount_to_take = self.predictor_position.side_a_amount - amount;
-            let amount_receive = (amount_to_take * (10_000 + delta_odd)) / 10_000;
+            let current_total_amount = (self.pool_vault.amount_side_a.checked_add(self.pool_vault.amount_side_b)).unwrap() as f64;
+            let current_odd = (self.pool_vault.amount_side_a as f64).div(current_total_amount) * 10_000 as f64;
+            let delta_odd = current_odd as i64 - self.predictor_position.side_a_entry_odd as i64;
+            let amount_receive = (amount * (10_000 + delta_odd) as u64) / 10_000;
             let mut market_fee_amount = (amount_receive * self.market.market_fee) / 10_000;
-            let liquidity_fee_amount =market_fee_amount / 2 + market_fee_amount % 2;
+            let liquidity_fee_amount = market_fee_amount / 2 + market_fee_amount % 2;
             market_fee_amount = market_fee_amount / 2;
             let platform_fee_amount = (amount_receive * self.platform_config.platform_fee as u64) / 10_000; 
             let final_amount = amount_receive - (market_fee_amount + platform_fee_amount);
             Some((final_amount, market_fee_amount, liquidity_fee_amount, platform_fee_amount))
         } else {
-            let current_odd: f64 = (self.pool_vault.amount_side_b as f64 / (self.pool_vault.amount_side_a  + self.pool_vault.amount_side_b)  as f64) * 10_000 as f64;
-            let delta_odd = current_odd as u64 - self.predictor_position.side_b_entry_odd;
-            let amount_to_take = self.predictor_position.side_b_amount - amount;
-            let amount_receive = (amount_to_take * (10_000 + delta_odd)) / 10_000;
+            let current_total_amount = (self.pool_vault.amount_side_a.checked_add(self.pool_vault.amount_side_b)).unwrap() as f64;
+            let current_odd = (self.pool_vault.amount_side_b as f64).div(current_total_amount) * 10_000 as f64;
+            let delta_odd = current_odd as i64 - self.predictor_position.side_b_entry_odd as i64;
+            let amount_receive = (amount * (10_000 + delta_odd) as u64) / 10_000;
             let mut market_fee_amount = (amount_receive * self.market.market_fee) / 10_000;
             let liquidity_fee_amount =market_fee_amount / 2 + market_fee_amount % 2;
             market_fee_amount = market_fee_amount / 2;

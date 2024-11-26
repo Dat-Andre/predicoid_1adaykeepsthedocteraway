@@ -123,7 +123,7 @@ impl<'info> LiquidityActions<'info> {
         );
 
         require!(
-            (self.liquidity_position.amount_provided - amount)  >= 500_000_000,
+            (self.liquidity_position.amount_provided - amount) >= 500_000_000,
             ErrorCode::LiquidityProvidedBelowMinimum
         );
         //we auto claim rewards when removing liquidity
@@ -138,7 +138,6 @@ impl<'info> LiquidityActions<'info> {
         //update pool vault state - note: add remainder to side_a
         self.pool_vault.amount_side_a -= amount / 2 + amount % 2;
         self.pool_vault.amount_side_b -= amount / 2;
-
 
         self.transfer_sol_from_pool_vault_to_provider(amount)?;
 
@@ -207,8 +206,10 @@ impl<'info> LiquidityActions<'info> {
     }
 
     pub fn transfer_sol_from_pool_vault_to_provider(&mut self, amount: u64) -> Result<()> {
-        
-        require!(self.pool_vault.get_lamports() >= amount, ErrorCode::NotEnoughLamports);
+        require!(
+            self.pool_vault.get_lamports() >= amount,
+            ErrorCode::NotEnoughLamports
+        );
 
         self.pool_vault.sub_lamports(amount)?;
         self.provider.add_lamports(amount)?;
