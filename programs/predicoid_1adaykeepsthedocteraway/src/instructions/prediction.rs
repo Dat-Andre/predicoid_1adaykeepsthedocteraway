@@ -214,7 +214,7 @@ impl<'info> Prediction<'info> {
         
     }
 
-    /* pub fn calculate_amount_to_take_and_fees(&self, amount: u64, side: &String) -> Option<(u64, u64, u64, u64)> {
+    pub fn calculate_amount_to_take_and_fees(&self, amount: u64, side: &String) -> Option<(u64, u64, u64, u64)> {
         // Extract shared variables
         // Determine the side-specific values
         let (side_amount, entry_odd) = if side == "A" {
@@ -246,32 +246,6 @@ impl<'info> Prediction<'info> {
 
         // Return the results as a tuple
         Some((final_amount, market_fee, liquidity_fee, platform_fee))
-    } */
-
-    pub fn calculate_amount_to_take_and_fees(&self, amount: u64, side: &String) -> Option<(u64, u64, u64, u64)> {
-        if side == "A" {
-            let current_total_amount = (self.pool_vault.amount_side_a.checked_add(self.pool_vault.amount_side_b)).unwrap() as f64;
-            let current_odd = (self.pool_vault.amount_side_a as f64).div(current_total_amount) * 10_000 as f64;
-            let delta_odd = current_odd as i64 - self.predictor_position.side_a_entry_odd as i64;
-            let amount_receive = (amount * (10_000 + delta_odd) as u64) / 10_000;
-            let mut market_fee_amount = (amount_receive * self.market.market_fee) / 10_000;
-            let liquidity_fee_amount = market_fee_amount / 2 + market_fee_amount % 2;
-            market_fee_amount = market_fee_amount / 2;
-            let platform_fee_amount = (amount_receive * self.platform_config.platform_fee as u64) / 10_000; 
-            let final_amount = amount_receive - (market_fee_amount + platform_fee_amount);
-            Some((final_amount, market_fee_amount, liquidity_fee_amount, platform_fee_amount))
-        } else {
-            let current_total_amount = (self.pool_vault.amount_side_a.checked_add(self.pool_vault.amount_side_b)).unwrap() as f64;
-            let current_odd = (self.pool_vault.amount_side_b as f64).div(current_total_amount) * 10_000 as f64;
-            let delta_odd = current_odd as i64 - self.predictor_position.side_b_entry_odd as i64;
-            let amount_receive = (amount * (10_000 + delta_odd) as u64) / 10_000;
-            let mut market_fee_amount = (amount_receive * self.market.market_fee) / 10_000;
-            let liquidity_fee_amount =market_fee_amount / 2 + market_fee_amount % 2;
-            market_fee_amount = market_fee_amount / 2;
-            let platform_fee_amount = (amount_receive * self.platform_config.platform_fee as u64) / 10_000;
-            let final_amount = amount_receive - (market_fee_amount + platform_fee_amount);
-            Some((final_amount, market_fee_amount, liquidity_fee_amount, platform_fee_amount))
-        }
     }
 
     pub fn calculate_entry_odd(&self, amount: u64, side: String) -> u64 {
