@@ -476,7 +476,7 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
 
 
     const tx2 = await program.methods.placePrediction(
-      new BN(6_000_000_000), "A".toString()
+      new BN(2_000_000_000), "A".toString()
     ).signers([predictor_2]).accountsPartial({
       predictor: predictor_2.publicKey,
       poolConfig: poolConfigPda,
@@ -525,7 +525,143 @@ describe("predicoid_1adaykeepsthedocteraway", () => {
     console.log("Predictor3 State - side A entry odd:", predictor3State.sideAEntryOdd.toString());
     console.log("Predictor3 State - side B entry odd:", predictor3State.sideBEntryOdd.toString());
 
-   // TODO - do some assertions here
+    // TODO - do some assertions here
+
+
+  });
+
+  it("remove predict side A", async () => {
+
+    const poolConfigPda = PublicKey.findProgramAddressSync([
+      Buffer.from("pool"),
+      marketAdmin.publicKey.toBytes(),
+      platform_admin.publicKey.toBytes(),
+      Buffer.from("UpCenter Event")
+    ], program.programId)[0];
+
+    const configPlatformPda = PublicKey.findProgramAddressSync([
+      Buffer.from("platform"),
+      platform_admin.publicKey.toBytes(),
+    ], program.programId)[0];
+
+    const marketPda = PublicKey.findProgramAddressSync([
+      Buffer.from("market"),
+      marketAdmin.publicKey.toBytes(),
+      configPlatformPda.toBytes(),
+    ], program.programId)[0];
+
+    const poolStatePda = PublicKey.findProgramAddressSync([
+      Buffer.from("pool_vault"),
+      poolConfigPda.toBytes(),
+    ], program.programId)[0];
+
+    const tx1 = await program.methods.removePrediction(
+      new BN(3_000_000_000), "A".toString()
+    ).signers([predictor_1]).accountsPartial({
+      predictor: predictor_1.publicKey,
+      poolConfig: poolConfigPda,
+      platformConfig: configPlatformPda,
+      poolVault: poolStatePda,
+      market: marketPda
+    }).rpc().then(confirmTx).then(log);
+
+    const poolLiquidityState_ = PublicKey.findProgramAddressSync([
+      Buffer.from("liquidity_state"),
+      poolConfigPda.toBytes(),
+    ], program.programId)[0];
+
+    const poolLiquidityPosition = PublicKey.findProgramAddressSync([
+      Buffer.from("liquidity_position"),
+      poolConfigPda.toBytes(),
+      liquidityProvider_1.publicKey.toBytes(),
+    ], program.programId)[0];
+
+    const predictor1PDA = PublicKey.findProgramAddressSync([
+      Buffer.from("predictor_position"),
+      poolConfigPda.toBytes(),
+      predictor_1.publicKey.toBytes(),
+    ], program.programId)[0];
+
+    const predictor2PDA = PublicKey.findProgramAddressSync([
+      Buffer.from("predictor_position"),
+      poolConfigPda.toBytes(),
+      predictor_2.publicKey.toBytes(),
+    ], program.programId)[0];
+
+    const predictor3PDA = PublicKey.findProgramAddressSync([
+      Buffer.from("predictor_position"),
+      poolConfigPda.toBytes(),
+      predictor_3.publicKey.toBytes(),
+    ], program.programId)[0];
+
+
+    let predictor1State = await program.account.predictorPosition.fetch(predictor1PDA);
+
+    let poolVaultData1 = await program.account.poolVaultState.fetch(poolStatePda);
+    console.log("Pool State PDA:", poolVaultData1);
+
+
+    console.log("Side A amount: ", poolVaultData1.amountSideA.toString());
+    console.log("Side B amount: ", poolVaultData1.amountSideB.toString());
+    let balance = await anchor.getProvider().connection.getBalance(poolStatePda).then(amount => console.log("Vault Balance: ", amount));
+    balance = await anchor.getProvider().connection.getBalance(predictor_1.publicKey).then(amount => console.log("Predictor1 Balance: ", amount));
+
+    console.log("Predictor State : ", predictor1State);
+    console.log("Predictor State - side A amount:", predictor1State.sideAAmount.toString());
+    console.log("Predictor State - side B amount:", predictor1State.sideBAmount.toString());
+    console.log("Predictor State - side A entry odd:", predictor1State.sideAEntryOdd.toString());
+    console.log("Predictor State - side B entry odd:", predictor1State.sideBEntryOdd.toString());
+
+
+    /*  const tx2 = await program.methods.placePrediction(
+       new BN(6_000_000_000), "A".toString()
+     ).signers([predictor_2]).accountsPartial({
+       predictor: predictor_2.publicKey,
+       poolConfig: poolConfigPda,
+       platformConfig: configPlatformPda,
+       poolVault: poolStatePda,
+       market: marketPda
+     }).rpc().then(confirmTx).then(log);
+ 
+     const tx3 = await program.methods.placePrediction(
+       new BN(3_000_000_000), "B".toString()
+     ).signers([predictor_3]).accountsPartial({
+       predictor: predictor_3.publicKey,
+       poolConfig: poolConfigPda,
+       platformConfig: configPlatformPda,
+       poolVault: poolStatePda,
+       market: marketPda
+     }).rpc().then(confirmTx).then(log); */
+
+    /* predictor1State = await program.account.predictorPosition.fetch(predictor1PDA);
+    let predictor2State = await program.account.predictorPosition.fetch(predictor2PDA);
+    let predictor3State = await program.account.predictorPosition.fetch(predictor3PDA);
+
+    poolVaultData1 = await program.account.poolVaultState.fetch(poolStatePda);
+    console.log("Pool State PDA:", poolVaultData1);
+    console.log("Side A amount: ", poolVaultData1.amountSideA.toString());
+    console.log("Side B amount: ", poolVaultData1.amountSideB.toString());
+    balance = await anchor.getProvider().connection.getBalance(poolStatePda).then(amount => console.log("Vault Balance: ", amount));
+
+    console.log("Predictor1 State : ", predictor1State);
+    console.log("Predictor1 State - side A amount:", predictor1State.sideAAmount.toString());
+    console.log("Predictor1 State - side B amount:", predictor1State.sideBAmount.toString());
+    console.log("Predictor1 State - side A entry odd:", predictor1State.sideAEntryOdd.toString());
+    console.log("Predictor1 State - side B entry odd:", predictor1State.sideBEntryOdd.toString());
+
+    console.log("Predictor2 State : ", predictor2State);
+    console.log("Predictor2 State - side A amount:", predictor2State.sideAAmount.toString());
+    console.log("Predictor2 State - side B amount:", predictor2State.sideBAmount.toString());
+    console.log("Predictor2 State - side A entry odd:", predictor2State.sideAEntryOdd.toString());
+    console.log("Predictor2 State - side B entry odd:", predictor2State.sideBEntryOdd.toString());
+
+    console.log("Predictor3 State : ", predictor3State);
+    console.log("Predictor3 State - side A amount:", predictor3State.sideAAmount.toString());
+    console.log("Predictor3 State - side B amount:", predictor3State.sideBAmount.toString());
+    console.log("Predictor3 State - side A entry odd:", predictor3State.sideAEntryOdd.toString());
+    console.log("Predictor3 State - side B entry odd:", predictor3State.sideBEntryOdd.toString()); */
+
+    // TODO - do some assertions here
 
 
   });
